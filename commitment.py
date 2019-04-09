@@ -21,32 +21,32 @@ def create_state_transfers(commitments):
     transfers = []
     cs = commitments
 
-    nums = len(cs)       # 承诺数量
+    nums = len(cs)       # 条款数量
     root = nums * [1]    # 初始状态 [1, 1, 1, ..., 1, 1]
     queue.append(root)
 
-    # 以bfs顺序建立图结构，图的每个结点是一个承诺状态列表
+    # 以bfs顺序建立图结构，图的每个结点是一个条款状态列表
     while len(queue):
         stats = queue.pop(0)
-        # 遍历当前状态中的所有承诺
+        # 遍历当前状态中的所有条款
         for i in range(0, len(stats)):
             c_stat = stats[i]
            
-            # 如果该承诺i状态为2（bas），则可能转移为3（边为res） 和 4（边为tc）
+            # 如果该条款i状态为2（bas），则可能转移为3（边为res） 和 4（边为tc）
             if c_stat == 2:
                 new_stats1 = list(stats)
                 new_stats1[i] = 3        # Ci : bas -> sat
                 new_stats2 = list(stats)
                 new_stats2[i] = 4        # Ci : bas -> vio
 
-                # 再次遍历承诺的集合，如果有承诺j 的前提 是承诺i sat或vio，则承诺j变为 bas (且该承诺必须本身为1)
+                # 再次遍历条款的集合，如果有条款j 的前提是条款i sat或vio，则条款j变为 bas (且该条款必须本身为1)
                 for j in range(0, len(stats)):
                     if stats[j] != 1:
                         continue
                     connect = cs[j].pre[0]
                     if connect:
-                        con_id = int(connect[0])              # 前提条件指定的承诺id
-                        con_stat = int(connect[1])            # 前提条件指定的承诺状态
+                        con_id = int(connect[0])              # 前提条件指定的条款id
+                        con_stat = int(connect[1])            # 前提条件指定的条款状态
                         if i == con_id and con_stat == 3:
                             new_stats1[j] = 2
                         elif i == con_id and con_stat == 4:
@@ -58,14 +58,14 @@ def create_state_transfers(commitments):
                 queue.insert(0, new_stats1)
                 queue.insert(0, new_stats2)
 
-            # 如果承诺i 状态为1(act)，则可能转移为2 (bas) 或 5 (exp)
+            # 如果条款i 状态为1(act)，则可能转移为2 (bas) 或 5 (exp)
             elif c_stat == 1:
                 # 转移为5的情况只需要 满足tc，可以直接写
                 new_stats1 = list(stats)
                 new_stats1[i] = 5        # Ci: act -> exp
 
-                # 如果某个承诺变为5，则所有当前为1，且以它为5作为前提的承诺变为2，以它3/4为前提的承诺变为5
-                # 且新变成5的承诺会递归 进行判断
+                # 如果某个条款变为5，则所有当前为1，且以它为5作为前提的条款变为2，以它3/4为前提的条款变为5
+                # 且新变成5的条款会递归 进行判断
                 exp_queue = []
                 exp_queue.append(i)
                 while len(exp_queue):
@@ -73,7 +73,7 @@ def create_state_transfers(commitments):
                     for j in range(0, len(stats)):
                         connect = cs[j].pre[0]
                         if stats[j] == 1 and connect:
-                            con_id = int(connect[0])              # 前提条件指定的承诺id
+                            con_id = int(connect[0])              # 前提条件指定的条款id
                             con_stat = int(connect[1])
                             if t == con_id and con_stat == 5:
                                 new_stats1[j] = 2
@@ -86,8 +86,8 @@ def create_state_transfers(commitments):
                 transfers.append([stats, new_stats1, 'exp-'+cs[i].tc])
                 queue.insert(0, new_stats1)
 
-                # 判断承诺i的前提条件中是否有与之前条件有依赖关系，有的话则检查是否满足，满足则转移为bas
-                # 其实以下代码只对根结点有效，因为对于其他节点，只要状态转移到3或4就会自动将 以他为前提的承诺设置为bas
+                # 判断条款i的前提条件中是否有与之前条件有依赖关系，有的话则检查是否满足，满足则转移为bas
+                # 其实以下代码只对根结点有效，因为对于其他节点，只要状态转移到3或4就会自动将 以他为前提的条款设置为bas
                 pre = cs[i].pre
                 connect = pre[0]
             
@@ -112,7 +112,7 @@ def create_state_transfers(commitments):
                     transfers.append([stats, new_stats2, event])
                     queue.insert(0, new_stats2)
             
-            # 对于承诺状态为3，4，5的则不做处理直接跳过
+            # 对于条款状态为3，4，5的则不做处理直接跳过
 
     return transfers
 
